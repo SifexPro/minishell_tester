@@ -1,35 +1,53 @@
 #!/bin/bash
 
 LOG=1
+CLEAN=0
 tests_dir="tests"
 
 # ajouter tests d'erreur
 commands=(
     "cat $tests_dir/test1"
 	"< $tests_dir/test1 wc -l"
+	"echo "hello" > $tests_dir/file_res/test1" # check out
+	"cat $tests_dir/test1 | wc -l"
+	"cat $tests_dir/test1 | wc -l | cat"
 	"< $tests_dir/test1 wc -l | cat"
 	"< $tests_dir/test1 wc -l | cat | wc -l"
-	"< $tests_dir/test1 wc -l | cat > $tests_dir/file_res/test1" # check out
+	"< $tests_dir/test1 wc -l | cat > $tests_dir/file_res/test2" # check out
+	"echo "append" >> $tests_dir/file_res/test2" # check out
 	"< $tests_dir/test1 wc -l | cat >> $tests_dir/file_res/test2" # check out
+	"<< stop cat\\nzzz\\nzzz\\nzzz\\nstop"
 	"<< stop cat | wc -l\\nzzz\\nzzz\\nzzz\\nstop"
 	"<< stop cat | wc -l | wc -l\\nzzz\\nzzz\\nzzz\\nstop"
-
+	"cat $tests_dir/test1 | gzip > $tests_dir/file_res/test1.gz" # check out
+	#"MY_VAR='erratas on the track'"
+	#"echo \$MY_VAR"
+	"<< stop wc -w\n1 2 3\n4 5\n6\nstop"
 )
 
 expected_results=(
-    "a\\na\\na\\na\\na" #0
+    "a\na\na\na\na" #0
 	"5" #1
-	"5" #2
-	"1" #3
-	"" #4
-	"" #5
-	"3" #6
-	"1" #7
+	""
+	"5"
+	"5"
+	"5"
+	"1"
+	""
+	""
+	""
+	"zzz\nzzz\nzzz"
+	"3"
+	"1"
+	""
+	#""
+	#"erratas on the track"
+	"6"
 )
 
 num_commands=${#commands[@]}
 
-file_contents=("a\\na\\na\\na\\na"
+file_contents=("a\na\na\na\na"
 "0")
 
 if [ ! -d "$tests_dir" ]; then
@@ -57,19 +75,22 @@ for ((i=0; i<num_commands; i++)); do
     echo "Command [$i] : \"$clean_command\""
 
 	OUTPUT=$(bash --posix -c "$clean_command")
-	expected_output=$(echo "${expected_results[i]}" | sed 's/\\n/\n/g')
-    
+	#echo "Output : $OUTPUT"
+	#expected_output=$(echo -e "${expected_results[i]}")
+    expected_output=$(echo -e "${expected_results[i]}")
+
     if [ "$OUTPUT" == "$expected_output" ]; then
         echo "✅ Success"
 		if [ "$LOG" -eq 1 ]; then
 			echo "✅ : |$OUTPUT|"
+			echo "✅ : |$expected_output|"
 		fi
     else
         echo "❌ Failed"
 		failures=$((failures + 1))
 		if [ "$LOG" -eq 1 ]; then
 			echo "❌ : |$OUTPUT|"
-			echo "✅ : |${expected_results[i]}|"
+			echo "✅ : |$expected_output|"
 		fi
     fi
 
@@ -84,4 +105,6 @@ if [ "$failures" -gt 0 ]; then
 fi
 
 # Clean up
-rm -rf "$tests_dir"
+if [ "$CLEAN" -eq 1 ]; then
+	rm -rf "$tests_dir"
+fi
