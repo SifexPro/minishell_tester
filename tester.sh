@@ -2,8 +2,9 @@
 
 ###################### CONFIG ######################
 LOG=1
-CLEAN=0
+CLEAN=1
 tests_dir="tests"
+
 
 ###################### TESTS ######################
 
@@ -54,7 +55,9 @@ expected_results=(
 file_contents_check=("hello"
 "5\nappend\n5")
 
-########### TESTER ###########
+
+###################### TESTER ######################
+
 num_commands=${#commands[@]}
 
 file_contents=("a\na\na\na\na"
@@ -136,7 +139,8 @@ if [ "$failures" -gt 0 ]; then
 	echo "❌ : $failures/$((num_commands + ${#file_contents_check[@]}))"
 fi
 
-# Clean up
+###################### CLEAN ######################
+
 if [ "$CLEAN" -eq 1 ]; then
 	rm -rf "$tests_dir"
 fi
