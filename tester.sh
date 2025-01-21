@@ -1,7 +1,7 @@
 #!/bin/bash
 
 LOG=1
-CLEAN=0
+CLEAN=1
 tests_dir="tests"
 
 # ajouter tests d'erreur

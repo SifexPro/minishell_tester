@@ -1,1 +1,1 @@
-# minishell_tester
+# A Simple Minishell Tester
