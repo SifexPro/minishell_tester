@@ -11,17 +11,20 @@ commands=(
 	"< $tests_dir/test1 wc -l | cat | wc -l"
 	"< $tests_dir/test1 wc -l | cat > $tests_dir/file_res/test1" # check out
 	"< $tests_dir/test1 wc -l | cat >> $tests_dir/file_res/test2" # check out
-	"<< stop cat | wc -l\\nzzz\\nstop"
+	"<< stop cat | wc -l\\nzzz\\nzzz\\nzzz\\nstop"
+	"<< stop cat | wc -l | wc -l\\nzzz\\nzzz\\nzzz\\nstop"
+
 )
 
 expected_results=(
-    "a\\na\\na\\na\\na"
-	"5"
-	"5"
-	"1"
-	""
-	""
-	"1"
+    "a\\na\\na\\na\\na" #0
+	"5" #1
+	"5" #2
+	"1" #3
+	"" #4
+	"" #5
+	"3" #6
+	"1" #7
 )
 
 num_commands=${#commands[@]}
@@ -46,11 +49,12 @@ for ((i = 0; i < ${#file_contents[@]}; i++)); do
     echo "Fichier '$file_path' créé avec succès."
 done
 
+failures=0
 
 for ((i=0; i<num_commands; i++)); do
 	clean_command=$(echo "${commands[i]}" | sed 's/\\n/\n/g')
 
-    echo "Command: \"$clean_command\""
+    echo "Command [$i] : \"$clean_command\""
 
 	OUTPUT=$(bash --posix -c "$clean_command")
 	expected_output=$(echo "${expected_results[i]}" | sed 's/\\n/\n/g')
@@ -62,14 +66,22 @@ for ((i=0; i<num_commands; i++)); do
 		fi
     else
         echo "❌ Failed"
+		failures=$((failures + 1))
 		if [ "$LOG" -eq 1 ]; then
 			echo "❌ : |$OUTPUT|"
 			echo "✅ : |${expected_results[i]}|"
 		fi
     fi
 
+
     echo "--------------------------------------"
 done
+
+echo -e "\\n\\nRESULTS:"
+echo "✅ : $((num_commands - failures))/$num_commands"
+if [ "$failures" -gt 0 ]; then
+	echo "❌ : $failures/$num_commands"
+fi
 
 # Clean up
 rm -rf "$tests_dir"
